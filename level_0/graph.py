@@ -10,6 +10,7 @@ e = tf.add(c, d, name="add_e")
 with tf.Session() as sess:
     print(sess.run(e))  # output => 23
     writer = tf.summary.FileWriter("../data/graph/hello", sess.graph)
+    writer.close()
 
 # cd data/graph/
 # tensorboard --logdir="./hello"
