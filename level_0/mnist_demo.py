@@ -3,7 +3,6 @@ import tensorflow as tf
 import tensorflow.examples.tutorials.mnist.input_data as input_data
 mnist = input_data.read_data_sets("../data/mnist", one_hot=True)
 
-
 x = tf.placeholder(tf.float32, [None, 784])
 
 # paras
@@ -29,8 +28,12 @@ for i in range(10000):
     batch_xs, batch_ys = mnist.train.next_batch(100)
     sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
 
+# tf.argmax返回沿着某个维度最大值的位置
 correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+# tf.cast用于改变张量的数据类型
+# tf.reduce_mean计算张量沿着指定的数轴上的的平均值
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
+# 只运行accuracy这一个组件
 print("Accuarcy on Test-dataset: ", sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
 sess.close()

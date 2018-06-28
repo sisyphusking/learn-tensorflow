@@ -37,6 +37,7 @@ with tf.Session() as sess:
     for i in range(500):
         total_loss = 0
         for x, y in zip(xs, ys):
+            # 第一个参数指的是optimizer值，第二个是loss值
             _, l = sess.run([optimizer, loss], feed_dict={X:x, Y:y})
             total_loss += l
         if i%10 == 0:
