@@ -96,7 +96,7 @@ config = projector.ProjectorConfig()
 embed = config.embeddings.add()
 embed.tensor_name = embedding.name
 embed.metadata_path = DIR + 'projector/metadata.tsv'
-embed.sprite.image_path = DIR + 'mnist_10k.png'
+embed.sprite.image_path = 'mnist_10k.png'
 embed.sprite.single_image_dim.extend([28, 28])
 projector.visualize_embeddings(projector_writer, config)
 
