@@ -75,7 +75,7 @@ def build_dataset(words, vocabulary_size):
     dictionary = dict()
     for word, _ in count:
         dictionary[word] = len(dictionary)
-    # data把数据集的词都编号
+    # data：把数据集的词都编号，从第一个到最后一个，在top50000之内的都标上其词频编号，之外的都标0
     data = list()
     unk_count = 0
     for word in words:
@@ -114,17 +114,19 @@ def generate_batch(batch_size, num_skips, skip_window):
     labels = np.ndarray(shape=(batch_size, 1), dtype=np.int32)
 
     span = 2 * skip_window + 1  # [ skip_window target skip_window ]
-    buffer = collections.deque(maxlen=span)
+    buffer = collections.deque(maxlen=span)  # 双向队列
     # [ skip_window target skip_window ]
     # [ skip_window target skip_window ]
     # [ skip_window target skip_window ]
+
+    # Skip-Gram模型刚好和CBOW相反，它是通过目标词汇来预测上下文词汇，例如目标词汇是“早餐”，上下文词汇可能是“今天”和“吃面包”
 
     #     [0 1 2 3 4 5 6 7 8 9 ...]
     #            t     i
     # 循环3次
     for _ in range(span):
         buffer.append(data[data_index])
-        data_index = (data_index + 1) % len(data)
+        data_index = (data_index + 1) % len(data)  # data_index逐步加1
     # 获取batch和labels
     for i in range(batch_size // num_skips):
         target = skip_window  # target label at the center of the buffer
@@ -142,6 +144,16 @@ def generate_batch(batch_size, num_skips, skip_window):
     # Backtrack a little bit to avoid skipping words in the end of a batch
     # 回溯3个词。因为执行完一个batch的操作之后，data_index会往右多偏移span个位置
     data_index = (data_index + len(data) - span) % len(data)
+    # data_index = 4
+    # batch:[3081 3081   12   12    6    6  195  195]
+    # labels: [[  12]
+    #           [5234]
+    #           [3081]
+    #           [   6]
+    #           [ 195]
+    #           [  12]
+    #           [   6]
+    #            [   2]]
     return batch, labels
 
 
@@ -154,8 +166,8 @@ for i in range(8):
 # Step 4: Build and train a skip-gram model.
 batch_size = 128
 # 词向量维度
-embedding_size = 128  # Dimension of the embedding vector.
-skip_window = 1  # How many words to consider left and right.
+embedding_size = 128  # Dimension of the embedding vector. 每个词的向量维度
+skip_window = 1  # How many words to consider left and right. 考虑目标词汇左右多少个上下文词汇
 num_skips = 2  # How many times to reuse an input to generate a label.
 
 # We pick a random validation set to sample nearest neighbors. Here we limit the
@@ -180,10 +192,11 @@ with graph.as_default():
     # 词向量
     # Look up embeddings for inputs.
     embeddings = tf.Variable(
-        tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0))
+        tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0))  # 50000*128
+
     # embedding_lookup(params,ids)其实就是按照ids顺序返回params中的第ids行
     # 比如说，ids=[1,7,4],就是返回params中第1,7,4行。返回结果为由params的1,7,4行组成的tensor
-    # 提取要训练的词
+    # 提取要训练的词, 批次
     embed = tf.nn.embedding_lookup(embeddings, train_inputs)
 
     # Construct the variables for the noise-contrastive estimation(NCE) loss
@@ -195,6 +208,7 @@ with graph.as_default():
     # Compute the average NCE loss for the batch.
     # tf.nce_loss automatically draws a new sample of the negative labels each
     # time we evaluate the loss.
+    # nce:噪声对比估计，将上下文对应正确的目标词汇标记为正样本，然后抽取些错误词汇作为负样本，然后最大化目标函数值
     loss = tf.reduce_mean(
         tf.nn.nce_loss(weights=nce_weights,
                        biases=nce_biases,
@@ -233,7 +247,7 @@ with tf.Session(graph=graph) as session:
     for step in xrange(num_steps):
         # 获取一个批次的target，以及对应的labels，都是编号形式的
         batch_inputs, batch_labels = generate_batch(
-            batch_size, num_skips, skip_window)
+            batch_size, num_skips, skip_window)   # 每次batch_size会自动往后移动span个长度
         feed_dict = {train_inputs: batch_inputs, train_labels: batch_labels}
 
         # We perform one update step by evaluating the optimizer op (including it
