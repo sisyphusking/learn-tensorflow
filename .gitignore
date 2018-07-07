@@ -1,4 +1,4 @@
 .idea/*
-data/*
-
+data/captcha/images/*
+data/mnist/*
 
