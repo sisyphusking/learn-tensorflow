@@ -1,4 +1,5 @@
 .idea/*
 data/captcha/images/*
 data/mnist/*
+data/cnn-text/run/*
 
