@@ -30,9 +30,15 @@ class TextCNN(object):
 
         # Embedding layer
         with tf.device('/cpu:0'), tf.name_scope("embedding"):
+            #  相当于word2vec中的词向量，准确来讲应该是使用训练好的word2vec向量，如下
+            # with open('embeddings.pickle', 'rb') as f:
+            #     embeddings = pickle.load(f)
+            # self.W = tf.Variable(embeddings, name='W')  # 如果是引用网上很成熟的词向量，那么这里可以不训练，直接设置成false
+
+            # 这是随机初始化的
             self.W = tf.Variable(
                tf.random_uniform([vocab_size, embedding_size], -1.0, 1.0),
-               name="W")  # 相当于word2vec中的词向量
+               name="W")
             # [batch_size, sequence_length, embedding_size]
             # 选取张量W里索引为input_x的元素
             self.embedded_chars = tf.nn.embedding_lookup(self.W, self.input_x)

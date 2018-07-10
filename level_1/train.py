@@ -60,6 +60,32 @@ vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 # 最大句子长度是56，不足的补零
 x = np.array(list(vocab_processor.fit_transform(x_text)))
 
+# ————————————————————————————————————————————————————
+# 如果不用上面的vocab_processor，可以使用下面的方式
+# 将x_test进行切分
+# text = np.array([x.split(" ") for x in x_text])
+# print("text:", text[:5])
+#
+# with open('w2v_dict.pickle', 'rb') as f:
+#     w2v_dict = pickle.load(f)
+#
+# x = []
+# for line in text:
+#     line_len = len(line)
+#     text2num = []
+#     for i in xrange(max_document_length):
+#         if (i < line_len):
+#             try:
+#                 text2num.append(w2v_dict[line[i]])  # 把词转为数字
+#             except:
+#                 text2num.append(0)  # 没有对应的词
+#         else:
+#             text2num.append(0)  # 填充0
+#     x.append(text2num)
+# x = np.array(x)
+# ————————————————————————————————————————————————————
+
+
 # Randomly shuffle data
 np.random.seed(10)
 # 随机打乱样本，permutation不直接在原来的数组上进行操作，而是返回一个新的打乱顺序的数组，并不改变原来的数组。
@@ -97,10 +123,13 @@ with tf.Graph().as_default():
         # Define Training procedure
         global_step = tf.Variable(0, name="global_step", trainable=False)
         optimizer = tf.train.AdamOptimizer(1e-3)
+        # 下面两步相当于minimize(cnn.loss)
+        # 因此上面可以改写成optimizer = tf.train.AdamOptimizer(1e-3).minimize(cnn.loss)
         grads_and_vars = optimizer.compute_gradients(cnn.loss)
         train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
         # Keep track of gradient values and sparsity (optional)
+        # 保存变量梯度值
         grad_summaries = []
         for g, v in grads_and_vars:
             if g is not None:
@@ -180,6 +209,7 @@ with tf.Graph().as_default():
             list(zip(x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
         # Training loop. For each batch...
         for batch in batches:
+            # 将batch进行拆分
             x_batch, y_batch = zip(*batch)
             train_step(x_batch, y_batch)
             current_step = tf.train.global_step(sess, global_step)
