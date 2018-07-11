@@ -93,6 +93,8 @@ class Autoencoder:
         return img
 
 
+
+
 hidden_dim = 1
 data = datasets.load_iris().data
 input_dim = len(data[0])
